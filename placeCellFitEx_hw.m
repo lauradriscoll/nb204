@@ -65,13 +65,16 @@ set(hp,'MarkerSize',10);    % make dots bigger
 % each spatial bin, so we need to normalize by the amount of time he spends
 % in each bin.
 
-% [NOTE: It would be good to have students plot both the raw spike
-% histogram and compare it with the occupancy normalized version.]
-
 positionBins=0:10:100;
 
 % Using the positionBins indicated above, make a histogram of positions 
-% where we got spikes.
+% where we got spikes. NOTE: You need to both plot a histogram and
+% create a variable containing the spike-counts per bin so that you can create
+% the normalized histogram below. The general way to do this is to use
+% 'hist' to bin the data in a variable, then use 'bar' to create the plot:
+% countsPerBin = hist(yData,positionBins);
+% bar(positionBins,countsPerBin);
+
 subplot(nr,nc,nc+1)
 
 
@@ -80,9 +83,16 @@ subplot(nr,nc,nc+1)
 xlabel('Position [cm]')			%Label the axes.
 ylabel('Spike count')
 title('Spike histogram');
+set(gca,'XTick',-50:50:150);  % Easier to see
 
 % Using the positionBins indicated above, make a histogram of the occupancy
-% times in seconds
+% times in seconds. Think carefully about what you are binning here. If,
+% for example, a given position bin contains 100 counts (from the variable
+% ratPosition), how man seconds did the rat spend in that position bin?
+% As a reality check, you can see from fig. 1 that the entire experiment
+% lasted just shy of 180 seconds. If you have calculated the occupancy
+% times in seconds, then the sum of all occupancy bins should add up to the
+% total length of the experiment.
 subplot(nr,nc,nc+2)
 
 
@@ -104,6 +114,10 @@ subplot(nr,nc,nc+3)
 xlabel('Position [cm]')			%Label the axes.
 ylabel('Occupancy normalized counts (spikes/s)')
 title('Occupancy normalized histogram');
+
+% Compare the histogram in the lower left panel ('Spike histogram') with
+% the one on the lower right ('Occupancy normalized histogram'). Are there
+% any differences? 
 
 %% Chapter 9, Model #1
 % We want to fit a model that will predict the cell's spike counts in each
