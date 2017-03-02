@@ -1,2 +1,2 @@
 # nb204
-matlab code for systems neuroscience code at harvard
+matlab code for systems neuroscience course at harvard med school
