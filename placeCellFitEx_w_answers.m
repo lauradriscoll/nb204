@@ -40,15 +40,15 @@ title('Fig. 1: Rat position vs. time');
 % spike occurred. Name that variable 'spikeTrain'. Use the space provided
 % below. Hint: use  the variables 'expTime' and 'spikeTimes'
 
-
-
-
+%ANSWER
+spikeTrain = ismember(expTime,spikeTimes);
+%
 
 % Find the index of each spike and name that variable 'spikeIndex' (220 x 1).
 
-
-
-
+%ANSWER
+spikeIndex = find(spikeTrain);
+%
 
 % We then use that index to plot a dot of the rat's position at the time
 % of that spike.
@@ -79,9 +79,10 @@ positionBins=0:10:100;
 
 subplot(nr,nc,nc+1)
 
-
-
-
+%ANSWER
+spikeHist = hist(ratPosition(spikeIndex),positionBins);
+bar(positionBins,spikeHist);
+%
 
 xlabel('Position [cm]')			%Label the axes.
 ylabel('Spike count')
@@ -98,9 +99,10 @@ set(gca,'XTick',-50:50:150);  % Easier to see
 % total length of the experiment.
 subplot(nr,nc,nc+2)
 
-
-
-
+%ANSWER
+occupancyHist = hist(ratPosition,positionBins)/1000;
+bar(positionBins,occupancyHist);
+%
 
 xlabel('Position [cm]')			%Label the axes.
 ylabel('Time in spatial bin (s)')
@@ -110,9 +112,9 @@ title('Position histogram');
 % normalized by the occupancy time in each bin.
 subplot(nr,nc,nc+3)
 
-
-
-
+%ANSWER
+bar(positionBins,spikeHist./occupancyHist);
+%
 
 xlabel('Position [cm]')			%Label the axes.
 ylabel('Occupancy normalized counts (spikes/s)')
@@ -133,9 +135,9 @@ title('Occupancy normalized histogram');
 
 [b1,dev1,stats1] = glmfit();
 
-
-
-
+%ANSWER
+[b1,dev1,stats1] = glmfit(ratPosition,spikeTrain,'poisson','log');
+%
 
 %re-plot occupancy norm. hist.
 subplot(nr,nc,2*nc+1)
@@ -151,9 +153,9 @@ title('Model 1: Position only covariate');
 
 [b2,dev2,stats2] = glmfit();
 
-
-
-
+%ANSWER
+[b2,dev2,stats2] = glmfit([ratPosition, ratPosition.^2],spikeTrain,'poisson','log');
+%
 
 % look at the fit
 subplot(nr,nc,2*nc+2)
@@ -184,18 +186,19 @@ ylabel('Position (cm)');
 % Q1: Is there any relationship between the residuals of our model and the
 % direction of motion of the rat
 
-
-
-
+%ANSWER
+% residuals get bigger as rat moves in positive direction and smaller
+% as he moves in the negative direction.
+%
 
 %% Include direction of motion in the model: Model #3
 
 % So we need a covariate for direction. Let's start with a simple
 % indicator variable: 1 if rat is moving in positive direction, 0 otherwise
 
-
-
-
+%ANSWER
+ratDirection = [0; diff(ratPosition) > 0];
+%
 
 % Now we just throw this into the model as another covariate:
 [b3,dev3,stats3] = glmfit([ratPosition,ratPosition.^2,ratDirection],spikeTrain,'poisson','log');
@@ -203,9 +206,9 @@ ylabel('Position (cm)');
 % Is the directional coefficient statistically significant? Check the p
 % value in our stats output variable for each predictor.
 
-
-
-
+%ANSWER
+pBeta3 = stats3.p(4)<.05;    % darn tootin'
+%
 
 % and now re-do our cumulative residuals plot: much better
 cumResid = cumsum(stats3.resid);
