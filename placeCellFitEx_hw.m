@@ -41,13 +41,13 @@ title('Fig. 1: Rat position vs. time');
 % below. Hint: use  the variables 'expTime' and 'spikeTimes'
 
 
-
+spikeTrain = [];
 
 
 % Find the index of each spike and name that variable 'spikeIndex' (220 x 1).
 
 
-
+spikeIndex = [];
 
 
 % We then use that index to plot a dot of the rat's position at the time
@@ -56,6 +56,7 @@ hp=plot(expTime(spikeIndex),ratPosition(spikeIndex),'r.');
 set(hp,'MarkerSize',10);    % make dots bigger
 
 %%QUESTION: When does the cell fire? Is it just a place cell?
+
 
 
 
@@ -76,7 +77,6 @@ positionBins=0:10:100;
 % 'hist' to bin the data in a variable, then use 'bar' to create the plot:
 % countsPerBin = hist(yData,positionBins);
 % bar(positionBins,countsPerBin);
-
 subplot(nr,nc,nc+1)
 
 
@@ -101,7 +101,6 @@ subplot(nr,nc,nc+2)
 
 
 
-
 xlabel('Position [cm]')			%Label the axes.
 ylabel('Time in spatial bin (s)')
 title('Position histogram');
@@ -109,7 +108,6 @@ title('Position histogram');
 % Now make a histogram of the positions where spikes occurred that is 
 % normalized by the occupancy time in each bin.
 subplot(nr,nc,nc+3)
-
 
 
 
@@ -131,8 +129,13 @@ title('Occupancy normalized histogram');
 % Fit Poisson Model to the spike train data using the rat's position as a 
 % predictor. Fill in the inputs below. See help on function 'glmfit'. 
 
+
 [b1,dev1,stats1] = glmfit();
 
+
+%QUESTION
+% What are each of these output terms (b1,dev1,stats1)?
+%
 
 
 
@@ -149,10 +152,8 @@ title('Model 1: Position only covariate');
 
 %% Improve model fit by adding a squared term for position: Model #2
 
+
 [b2,dev2,stats2] = glmfit();
-
-
-
 
 
 % look at the fit
@@ -181,7 +182,7 @@ yyaxis right
 plot(expTime,ratPosition);
 ylabel('Position (cm)');
 
-% Q1: Is there any relationship between the residuals of our model and the
+% QUESTION: Is there any relationship between the residuals of our model and the
 % direction of motion of the rat
 
 
@@ -194,7 +195,7 @@ ylabel('Position (cm)');
 % indicator variable: 1 if rat is moving in positive direction, 0 otherwise
 
 
-
+ratDirection = [];
 
 
 % Now we just throw this into the model as another covariate:
@@ -216,6 +217,20 @@ xlabel('Time (s)');
 ylabel('Cumulative residuals');
 
 %% Plot occupancy normalized histogram for each direction of motion separately
+
+%EXTRA CREDIT QUESTION
+% Why might it be useful to fit separate models for each direction of
+% motion. Think about other predictors that we don't have access to. Are
+% there any more predictors we could obtain from the data in our workspace?
+% See if you can obtain any differential statistics of the animal's
+% behavior in the forward and reverse directions. Examine how we can split
+% model fit in forward and reverse directions below.
+
+
+
+
+
+
 spikeTrainUp = spikeTrain & ratDirection;
 spikeTrainDown = spikeTrain & ~ratDirection;
 spikeIndexUp=find(spikeTrainUp);%Determine index of each spike.
@@ -255,8 +270,8 @@ errorbar(positionBins,lambdaDown.*1000,CIloDown.*1000,CIhiDown.*1000,'r');
 xlabel('Position (cm)');
 ylabel('Firing rate (spikes/s)');
 
-return
-%%  Measures of goodness of fit (work in progress)
+
+%%  Measures of goodness of fit
 
 % "There is not a single procedure for measuring goodness-of-fit; instead
 % there are many tools that, taken together, can provide a broad
@@ -266,43 +281,48 @@ return
 % AIC is a form of "penalized likelihood" measure: we first compute
 % -2*log(likelihood) of the data given the model (will ebe small for good
 % models) and then add a penalty term "2*p," where p is the number of
-% parameters in the model.
+% parameters in the model. 
+
+%QUESTION
+% Why do we penalize for the number of parameters in the model?
+
+
+
+
 
 % Recall that what we are actually predicting is the Poisson rate
 % parameter, lambda. For model #1 (only x as covariate)
 lambda1 = exp(b1(1)+ b1(2)*ratPosition);          %Poisson rate function,
-LL1 = sum(log(poisspdf(spikeTrain,lambda1)));     %log likelihood
-AIC1 = -2*LL1+ (2*2);                           %AIC for Model 2 (2 free params)
+loglikelihood1 = sum(log(poisspdf(spikeTrain,lambda1)));     %log likelihood
 
-%Compute the AIC for Model 2: position & position^2
-AIC2 = -2*sum(log(poisspdf(spikeTrain, ...
-              exp(b2(1) + b2(2)*ratPosition + b2(3)*ratPosition.^2)))) + (2*3);
+%Calculate AIC for Model 1
 
-dAIC=AIC1-AIC2;		%Difference in AIC between Models 1 and 2; 636.0145
 
-% What does this number mean? In general, we just pick the model with the
-% lower AIC value, but we can also think of it in terms of the parameter
-% penalty: the fact that model 2 has an AIC of ~636 less than the AIC of
-% model 1 means that model 2 would still be preferable to model 1 even if
-% it had 636/2 (= 318) more parameters than it actually does.
+
+
+
+%Calculate AIC for Model 2
+
+
+          
+          
+
+dAIC=AIC1-AIC2;		%Difference in AIC between Models 1 and 2; Your answer should be 636.0145.
+
+% QUESTION
+% What does this number mean? 
+
+
+
+
 
 % NOTE: We can also more easily calculate AIC from the deviance 
-% (The deviance is a generalization of the residual sum of squares.)
+% (The deviance is a generalization of the residual sum of squares for all 
+% exponential family distributions. Sum of squares is only appropriate for 
+% gaussian distributions.)
+
 % deltaAIC = (Dev1 + 2*p1) - (Dev2 + 2*p2)
-alt_dAIC = (dev1 + 4) - (dev2 + 6);     % compare with dAIC above
-
-%% Method 2: Chi-square test for nested models
-% The AIC method does not tell us whether adding a parameter
-% *significantly* improves our fit to the data. To do this, we can use a
-% class of hypothesis test called "maximum likelihood ratio tests".
-
-% For this test, H0 is that the additional parameters (i.e. those in the
-% full model that are not contained in the reduced model) all = 0. The test
-% statistic for the MLRT is equivalent to the difference in deviances:
-% S = dev1 - dev2
-% Under H0, this statistic follows a chi-square distribution with n2 - n1
-% (i.e. diff. in # of parameters) degrees of freedom:
-pVal = 1-chi2cdf(dev1 - dev2,1);	%Compare Models 1 and 2, nested GLMs.
+alt_dAIC = (dev1 + 2*2) - (dev2 + 2*3);     % compare with dAIC above
 
 %% Method 3: Confidence intervals on model parameters
 
@@ -310,70 +330,31 @@ pVal = 1-chi2cdf(dev1 - dev2,1);	%Compare Models 1 and 2, nested GLMs.
 CI1 =[b1 - 2*stats1.se, b1 + 2*stats1.se];
 eCI1 = exp(CI1);	%Exponentiate Model 1 CIs.
 
-% Confidence intervals:
-% b1(1) = [0.0004 to 0.0008], ~ 0.4 to 0.8 spikes per second at X = 0
-% b1(2) = [1.0090 to 1.0171], ~ each 1 cm. increase in position leads to an
-% increase in firing rate of between 0.9% and 1.7%.
-
 %Compute 95% CI for parameters of Model 2.
 CI2 = [b2 - 2*stats2.se, b2 + 2*stats2.se];
 eCI2 = exp(CI2);
 
-% Wald test: hypothesis test for whether a parameter is significantly
-% different from 0
 pBeta2 = stats2.p(3);	%Significance level of Model 2 additional parameter.
 
-%% Method 4: Kolmogorov-Smirnov test
-nSpikes = length(spikeTimes);				%Define # of spikes
-%Evaluate Model 2.
-lambda2 = exp(b2(1) + b2(2)*ratPosition + b2(3)*ratPosition.^2);
 
-% Re-scale waiting times (see p. 286-7 for explanation)
-Z = zeros(nSpikes,1);
-Z(1) = sum(lambda2(1:spikeIndex(1)));	%1st rescaled waiting time.
-for i = 2:nSpikes                             %... and the rest.
-  Z(i) = sum(lambda2(spikeIndex(i-1):spikeIndex(i)));
-end
+%% Comparing model #3 (with direction term) vs. model #2
 
-%Compute empirical CDF from rescaled waiting times.
-[eCDF, zVals] = ecdf(Z);
+% Calculate the dAIC between Model 2 and Model 3
 
-mCDF = 1-exp(-zVals);                       %Model CDF at z values.
-figure, plot(mCDF,eCDF)						%Create KS-plot.
-hold on
-plot([0 1], [0 1]+1.36/sqrt(nSpikes),'k--')	%Upper confidence bound.
-plot([0 1], [0 1]-1.36/sqrt(nSpikes),'k--')	%Lower confidence bound.
-xlabel('Model CDF')                         %Label the axes.
-ylabel('Empirical CDF')
-axis([0,1,0,1]);
-title('Fig. 9.8: KS plot of rescaled data for model 2');
 
-%% Comparing model #4 (with direction term) vs. model #2
-dAIC = (dev2 + 2*3) - (dev4 + 2*4);
-p2vs4 = 1 - chi2cdf(dev2-dev4,1);       % Wald test
 
-%For model 4, compute 95% CI for last parameter,
-CIbeta3 = [b4(4)-2*stats4.se(4), b4(4)+2*stats4.se(4)];
-p_beta3 = stats4.p(4);	%... and significance level.
 
-% KS plot for model #4
-lambda4 = exp(b4(1) + b4(2)*ratPosition + b4(3)*ratPosition.^2 + b4(4)*ratDirection);
 
-% Re-scale the waiting times
-Z = zeros(nSpikes,1);
-Z(1) = sum(lambda4(1:spikeIndex(1)));	%1st rescaled waiting time.
-for i=2:nSpikes							%... and the rest.
-  Z(i)=sum(lambda4(spikeIndex(i-1):spikeIndex(i)));
-end
+%For model 3, compute 95% CI for last parameter and find the significance
+%level.
 
-[eCDF, zVals] = ecdf(Z);                    %Define empirical CDF,
-mCDF = 1-exp(-zVals);                       %...and model CDF,
-figure, plot(mCDF,eCDF)                     %...to create KS-plot.
-hold on
-plot([0 1], [0 1]+1.36/sqrt(nSpikes),'k')	%Upper confidence bound.
-plot([0 1], [0 1]-1.36/sqrt(nSpikes),'k')	%Lower confidence bound.
-xlabel('Model CDF'); ylabel('Empirical CDF');
-axis([0,1,0,1]);
-title('Figure 9.10: KS plot of rescaled data for model #4');
 
-% Overall conclusion: Model #4 = pretty darned good.
+
+
+
+%QUESTION
+%What do these results tell us about our three models?
+
+
+
+

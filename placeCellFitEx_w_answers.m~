@@ -345,6 +345,11 @@ alt_dAIC = (dev1 + 2*2) - (dev2 + 2*3);     % compare with dAIC above
 CI1 =[b1 - 2*stats1.se, b1 + 2*stats1.se];
 eCI1 = exp(CI1);	%Exponentiate Model 1 CIs.
 
+% Confidence intervals:
+% b1(1) = [0.0004 to 0.0008], ~ 0.4 to 0.8 spikes per second at X = 0
+% b1(2) = [1.0090 to 1.0171], ~ each 1 cm. increase in position leads to an
+% increase in firing rate of between 0.9% and 1.7%.
+
 %Compute 95% CI for parameters of Model 2.
 CI2 = [b2 - 2*stats2.se, b2 + 2*stats2.se];
 eCI2 = exp(CI2);
@@ -355,27 +360,32 @@ pBeta2 = stats2.p(3);	%Significance level of Model 2 additional parameter.
 
 
 %% Comparing model #3 (with direction term) vs. model #2
-
-% Calculate the dAIC between Model 2 and Model 3
-
-%ANSWER
 dAIC = (dev2 + 2*3) - (dev3 + 2*4);
-%
-
 p2vs3 = 1 - chi2cdf(dev2-dev3,1);       % Wald test
 
-%For model 3, compute 95% CI for last parameter and find the significance
-%level using the Wald test.
+%For model 4, compute 95% CI for last parameter,
+CIbeta3 = [b3(4)-2*stats3.se(4), b3(4)+2*stats3.se(4)];
+p_beta3 = stats3.p(4);	%... and significance level.
 
-%ANSWER
-CI3 = [b3(4)-2*stats3.se(4), b3(4)+2*stats3.se(4)];
+% KS plot for model #3
+lambda3 = exp(b3(1) + b3(2)*ratPosition + b3(3)*ratPosition.^2 + b3(4)*ratDirection);
 
-pBeta3 = stats3.p(4);	%... and significance level.
-%
+% Re-scale the waiting times
+nSpikes = size(spikeTimes,1);
+Z = zeros(nSpikes,1);
+Z(1) = sum(lambda3(1:spikeIndex(1)));	%1st rescaled waiting time.
+for i=2:nSpikes							%... and the rest.
+  Z(i)=sum(lambda3(spikeIndex(i-1):spikeIndex(i)));
+end
 
-%QUESTION
-%What do these results tell us about our three models?
+[eCDF, zVals] = ecdf(Z);                    %Define empirical CDF,
+mCDF = 1-exp(-zVals);                       %...and model CDF,
+figure, plot(mCDF,eCDF)                     %...to create KS-plot.
+hold on
+plot([0 1], [0 1]+1.36/sqrt(nSpikes),'k')	%Upper confidence bound.
+plot([0 1], [0 1]-1.36/sqrt(nSpikes),'k')	%Lower confidence bound.
+xlabel('Model CDF'); ylabel('Empirical CDF');
+axis([0,1,0,1]);
+title('Figure 9.10: KS plot of rescaled data for model #3');
 
-
-
-
+% Overall conclusion: Model #3 = pretty darned good.
